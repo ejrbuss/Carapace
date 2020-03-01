@@ -1,0 +1,5 @@
+atoms 
+    = string
+    | flag
+    | number
+    ;

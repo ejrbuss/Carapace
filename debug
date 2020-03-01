@@ -1,0 +1,24 @@
+None
+
+rule
+    | rule rules
+
+rule
+
+None
+
+'IDENT' 'EQUAL' expr 'TERMINATOR'
+
+'IDENT'
+
+rule rules
+
+rule
+
+None
+
+'IDENT' 'EQUAL' expr 'TERMINATOR'
+
+'IDENT'
+
+False
