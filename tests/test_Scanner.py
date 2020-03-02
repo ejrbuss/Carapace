@@ -1,5 +1,15 @@
 from carapace import (Scanner)
 
+def test_furthest():
+    scanner = Scanner.of("test")
+    Scanner.chomp(scanner)
+    checkpoint = Scanner.checkpoint(scanner)
+    Scanner.consume(scanner, 2)
+    furthest = Scanner.checkpoint(scanner)
+    Scanner.rollback(scanner, checkpoint)
+    assert Scanner.checkpoint(scanner) == checkpoint
+    assert Scanner.furthest(scanner) == furthest
+
 def test_rollback():
     scanner = Scanner.of("test")
     checkpoint = Scanner.checkpoint(scanner)

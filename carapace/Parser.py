@@ -1,6 +1,6 @@
 import re
 
-from carapace import (Scanner)
+from carapace import (Scanner, Lexer)
 
 ### Gramamr ###
 
@@ -18,6 +18,12 @@ def sequence(*exprs):
 
 def choice(*alternatives):
     return dict(type="choice", alternatives=list(alternatives))
+
+def repetition(expr):
+    return dict(type="repetition", expr=expr)
+
+def option(expr):
+    return dict(type="option", expr=expr)
 
 def non_terminal(name):
     return dict(type="non_terminal", name=name)
@@ -60,40 +66,112 @@ def check(grammar, tokens):
     scanner = Scanner.of(tokens)
     rules   = grammar["rules"]
 
-    def check_expr(expr, tab, debug=False):
-        if debug:
-            print(tab, Scanner.rest(scanner), '=>', re.sub(r"\s+", " ", describe_expr(expr)))
-
+    def check_expr(expr):
         if expr["type"] == "rule":
-            return check_expr(expr["expr"], tab + " ")
+            return check_expr(expr["expr"])
 
         if expr["type"] == "sequence":
             checkpoint = Scanner.checkpoint(scanner)
             for expr in expr["exprs"]:
-                if not check_expr(expr, tab + " "):
+                if not check_expr(expr):
                     Scanner.rollback(scanner, checkpoint)
                     return False
             return True
 
         if expr["type"] == "choice":
-
             for alt in expr["alternatives"]:
-                if check_expr(alt, tab + " "):
+                if check_expr(alt):
                     return True
             return False
 
         if expr["type"] == "non_terminal":
-            return check_expr(rules[expr["name"]], tab + " ")
+            return check_expr(rules[expr["name"]])
 
         if expr["type"] == "terminal":
-            if Scanner.current(scanner)["type"] == expr["token_type"]:
+            token = Scanner.current(scanner)
+            if token is not None and token["type"] == expr["token_type"]:
                 Scanner.chomp(scanner)
                 return True
             return False
 
-    return check_expr(grammar["root"], "")
+    return check_expr(grammar["root"])
 
 def parse(grammar, tokens):
     scanner = Scanner.of(tokens)
+    rules   = grammar["rules"]
 
-    pass
+    def parse_expr(expr):
+        if expr["type"] == "rule":
+            (parsed, node) = parse_expr(expr["expr"])
+            return (parsed, dict(type=expr["name"], value=node))
+
+        if expr["type"] == "sequence":
+            checkpoint = Scanner.checkpoint(scanner)
+            nodes      = []
+            for expr in expr["exprs"]:
+                (parsed, node) = parse_expr(expr)
+                if not parsed:
+                    Scanner.rollback(scanner, checkpoint)
+                    return (False, nodes)
+                nodes.append(node)
+            return (True, nodes)
+
+        if expr["type"] == "choice":
+            for (alt, expr) in enumerate(expr["alternatives"]):
+                (parsed, node) = parse_expr(expr)
+                if parsed:
+                    return (True, node)
+            return (False, None)
+
+        if expr["type"] == "non_terminal":
+            return parse_expr(rules[expr["name"]])
+
+        if expr["type"] == "terminal":
+            token = Scanner.current(scanner)
+            if token is not None and token["type"] == expr["token_type"]:
+                Scanner.chomp(scanner)
+                return (True, token)
+            return (False, token)
+
+    return parse_expr(grammar["root"])
+
+def graph(cst, name="parse_tree"):
+
+    edges = set()
+
+    def add_edge(left, right):
+        edges.add(f"{id(left)} [ label=\"{label_node(left)}\" ] ;")
+        if isinstance(right, list):
+            edges.add(f"{id(left)} -> {{{' '.join([ str(id(right)) for right in right ])}}} ;")
+            for right in right:
+                edges.add(f"{id(right)} [ label=\"{label_node(right)}\" ] ;")
+        else:
+            edges.add(f"{id(left)} -> {id(right)} ;")
+            edges.add(f"{id(right)} [ label=\"{label_node(right)}\" ] ;")
+
+    def label_node(node):
+        if isinstance(node, dict):
+            if "type" in node and "value" in node:
+                return node["type"]
+            if "type" in node and "source" in node:
+                return Lexer.describe(node)
+        if isinstance(node, list):
+            return [ label_node(node) for node in node ]
+    
+    def graph_node(node):
+        if isinstance(node, dict):
+            if "type" in node and "value" in node:
+                add_edge(node, node["value"])
+                graph_node(node["value"])
+        if isinstance(node, list):
+            for node in node:
+                graph_node(node)
+
+    graph_node(cst)
+
+    return f"""
+        digraph {name} {{
+            ordering = out ;
+            {"".join(edges)}
+        }}
+    """

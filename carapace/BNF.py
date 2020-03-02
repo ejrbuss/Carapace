@@ -22,8 +22,8 @@ token_defs = [
 # The following defines BNF in BNF
 grammar_source = '''
 rules
-    = rule
-    | rule rules
+    = rule rules
+    | rule
     ;
 
 rule
@@ -43,11 +43,11 @@ term
 '''.strip()
 grammar = Parser.grammar(
     rule("rules", choice(
-        non_terminal("rule"),
         sequence(
             non_terminal("rule"),
             non_terminal("rules"),
         ),
+        non_terminal("rule"),
     )),
     rule("rule", sequence(
         terminal("identifier"),
@@ -72,3 +72,10 @@ grammar = Parser.grammar(
         terminal("terminal"),
     ))
 )
+
+def parse(source):
+    tokens = Lexer.lex(token_defs, source)
+    (parsed, cst) = Parser.parse(grammar, tokens)
+    if not parsed:
+        raise SyntaxError("Failed to parse! " + cst)
+    return cst
