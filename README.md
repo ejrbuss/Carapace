@@ -1,6 +1,11 @@
 # Carapace
 
+Dev dependencies:
+ - pytest
+ - pytest-cov
+ - invoke
+
 ## Tests
 ```
-pytest --cov=carapace
+pytest --cov=carapace --cov-report html
 ```

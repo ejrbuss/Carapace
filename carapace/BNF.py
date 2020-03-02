@@ -1,45 +1,47 @@
-from Parser import (
-    grammar,
+import re
+
+from carapace import (Parser, Lexer)
+from carapace.Parser import (
     rule,
     sequence,
     choice,
     non_terminal,
     terminal,
-    describe,
-    check,
 )
 
-'''
-We use a hand rolled BNF parser to bootstrap the parser. Our BNF has the following token types
+token_defs = [
+    Lexer.token("comment", re.compile(r"#.*"), skip=True),
+    Lexer.token("whitespace", re.compile(r"\s+"), skip=True),
+    Lexer.token("op_eq", "="),
+    Lexer.token("op_alt", "|"),
+    Lexer.token("terminator", ";"),
+    Lexer.token("terminal", re.compile(r"'\w+'")),
+    Lexer.token("identifier", re.compile(r"\w+")),
+]
 
-    IDENT
-    LITERAL
-    EQUAL
-    TERMINATOR
-
-And the following grammar
-
+# The following defines BNF in BNF
+grammar_source = '''
 rules
     = rule
     | rule rules
     ;
 
 rule
-    = 'IDENT' 'EQUAL' expr 'TERMINATOR'
+    = 'identifier' 'op_eq' expr 'terminator'
     ;
 
 expr
-    = term
+    = term 'op_alt' expr
     | term expr
+    | 
     ;
 
 term
-    = 'IDENT'
-    | 'LITERAL'
+    = 'identifier'
+    | 'terminal'
     ;
-'''
-
-bnf = grammar(
+'''.strip()
+grammar = Parser.grammar(
     rule("rules", choice(
         non_terminal("rule"),
         sequence(
@@ -48,15 +50,15 @@ bnf = grammar(
         ),
     )),
     rule("rule", sequence(
-        terminal("IDENT"),
-        terminal("EQUAL"),
+        terminal("identifier"),
+        terminal("op_eq"),
         non_terminal("expr"),
-        terminal("TERMINATOR"),
+        terminal("terminator"),
     )),
     rule("expr", choice(
         sequence(
             non_terminal("term"),
-            terminal("ALT"),
+            terminal("op_alt"),
             non_terminal("expr"),
         ),
         sequence(
@@ -66,12 +68,7 @@ bnf = grammar(
         sequence(),
     )),
     rule("term", choice(
-        terminal("IDENT"),
-        terminal("LITERAL"),
+        terminal("identifier"),
+        terminal("terminal"),
     ))
 )
-
-print(describe(bnf))
-print(check(bnf, [
-    "IDENT", "EQUAL", "IDENT", "TERMINATOR"
-]))

@@ -1,5 +1,6 @@
 import re
-import Scanner
+
+from carapace import (Scanner)
 
 ### Gramamr ###
 
@@ -21,8 +22,8 @@ def choice(*alternatives):
 def non_terminal(name):
     return dict(type="non_terminal", name=name)
 
-def terminal(pattern):
-    return dict(type="terminal", pattern=pattern)
+def terminal(token_type):
+    return dict(type="terminal", token_type=token_type)
 
 ### Utility ###
 
@@ -47,7 +48,7 @@ def describe_expr(expr):
         return expr["name"]
 
     if expr["type"] == "terminal":
-        return "'" + expr["pattern"] + "'"
+        return "'" + expr["token_type"] + "'"
 
 def describe(grammar):
     return "\n\n".join([ describe_expr(rule)
@@ -55,12 +56,13 @@ def describe(grammar):
         in grammar["rules"].values()
     ])
 
-def check(grammar, source):
-    scanner = Scanner.new(source)
+def check(grammar, tokens):
+    scanner = Scanner.of(tokens)
     rules   = grammar["rules"]
 
-    def check_expr(expr, tab):
-        print(tab, Scanner.rest(scanner), '=>', re.sub(r"\s+", " ", describe_expr(expr)))
+    def check_expr(expr, tab, debug=False):
+        if debug:
+            print(tab, Scanner.rest(scanner), '=>', re.sub(r"\s+", " ", describe_expr(expr)))
 
         if expr["type"] == "rule":
             return check_expr(expr["expr"], tab + " ")
@@ -84,9 +86,14 @@ def check(grammar, source):
             return check_expr(rules[expr["name"]], tab + " ")
 
         if expr["type"] == "terminal":
-            return Scanner.check(scanner, lambda token : token == expr["pattern"])
+            if Scanner.current(scanner)["type"] == expr["token_type"]:
+                Scanner.chomp(scanner)
+                return True
+            return False
 
     return check_expr(grammar["root"], "")
 
-def parse(grammar, input):
+def parse(grammar, tokens):
+    scanner = Scanner.of(tokens)
+
     pass

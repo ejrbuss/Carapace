@@ -12,12 +12,11 @@ def current(scanner):
         return scanner["source"][checkpoint(scanner)]
     return None
 
-def check(scanner, predicate):
-    if predicate(current(scanner)):
-        scanner["checkpoint"] += 1
-        return True
-    else:
-        return False
+def chomp(scanner):
+    consume(scanner, 1)
+
+def consume(scanner, n):
+    scanner["checkpoint"] += n
 
 def rest(scanner):
     return scanner["source"][checkpoint(scanner):]
