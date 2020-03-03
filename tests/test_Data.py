@@ -12,3 +12,7 @@ def test_subset():
     assert not Data.subset(dict(a=2), dict(a=1))
     assert not Data.subset(dict(a=1, b=2), dict(a=1))
     assert not Data.subset([dict(a=1), 2], [dict(b=2), 2])
+
+def test_deep_append():
+    assert Data.deep_append([1, 2, 3], 4) == [1, 2, 3, 4]
+    assert Data.deep_append([1, 2, 3], [4, [5, 6], 7]) == [1, 2, 3, 4, 5, 6, 7]

@@ -5,6 +5,7 @@ from carapace.Parser import (
     rule,
     sequence,
     choice,
+    many,
     non_terminal,
     terminal,
 )
@@ -14,15 +15,19 @@ token_defs = [
     Lexer.token("whitespace", re.compile(r"\s+"), skip=True),
     Lexer.token("op_eq", "="),
     Lexer.token("op_alt", "|"),
+    Lexer.token("op_cleft", "{"),
+    Lexer.token("op_cright", "}"),
+    Lexer.token("op_bleft", "["),
+    Lexer.token("op_bright", "]"),
     Lexer.token("terminator", ";"),
     Lexer.token("terminal", re.compile(r"'\w+'")),
     Lexer.token("identifier", re.compile(r"\w+")),
 ]
 
+# The following defines BNF in BNF
 grammar_source = '''
 rules
-    = rule rules
-    | rule
+    = { rule }
     ;
 
 rule
@@ -30,24 +35,23 @@ rule
     ;
 
 expr
-    = term 'op_alt' expr
-    | term expr
-    | 
+    = { term } 'op_alt' expr
+    | { term }
     ;
 
 term
+    = 'op_cleft' atom 'op_cright'
+    | 'op_bleft' atom 'op_bright'
+    | atom
+    ;
+
+atom
     = 'identifier'
     | 'terminal'
     ;
 '''.strip()
 grammar = Parser.grammar(
-    rule("rules", choice(
-        sequence(
-            non_terminal("rule"),
-            non_terminal("rules"),
-        ),
-        non_terminal("rule"),
-    )),
+    rule("rules", many(non_terminal("rule"))),
     rule("rule", sequence(
         terminal("identifier"),
         terminal("op_eq"),
@@ -56,17 +60,26 @@ grammar = Parser.grammar(
     )),
     rule("expr", choice(
         sequence(
-            non_terminal("term"),
+            many(non_terminal("term")),
             terminal("op_alt"),
             non_terminal("expr"),
         ),
-        sequence(
-            non_terminal("term"),
-            non_terminal("expr"),
-        ),
-        sequence(),
+        many(non_terminal("term")),
     )),
     rule("term", choice(
+        sequence(
+            terminal("op_cleft"),
+            non_terminal("atom"),
+            terminal("op_cright"),
+        ),
+        sequence(
+            terminal("op_bleft"),
+            non_terminal("atom"),
+            terminal("op_bright"),
+        ),
+        non_terminal("atom"),
+    )),
+    rule("atom", choice(
         terminal("identifier"),
         terminal("terminal"),
     ))

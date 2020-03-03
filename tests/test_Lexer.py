@@ -93,3 +93,24 @@ def test_lex():
         '''),
     )
 
+def test_syntax_error():
+    pytest.raises(SyntaxError, lambda : Lexer.lex([], '+'))
+    try:
+        Lexer.lex(BNF.token_defs, '''
+identifier
+    = identifier 
+    | [ terminal ]
+    ;
+        ''')
+    except SyntaxError as err:
+        print(str(err))
+        assert str(err).strip() == '''
+Unexpected character sequence!
+
+<anonymous>:4:7
+ 2 | identifier
+ 3 |     = identifier 
+ 4 |     | [ terminal ]
+   |       ^ I'm not sure what this is!
+
+'''.strip()

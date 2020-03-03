@@ -11,3 +11,22 @@ def subset(part, full):
         return True
     print("part:", part, "full:", full, "part == full", part == full, type(part), type(full))
     return part == full
+
+def dump(data):
+    import json
+    print(json.dumps(data))
+
+def deep_append(unwrapped, element):
+    wrapped = []
+    if isinstance(element, list):
+        wrapped.extend(element)
+    else:
+        unwrapped.append(element)
+    while len(wrapped) > 0:
+        element = wrapped.pop(0)
+        if isinstance(element, list):
+            element.extend(wrapped)
+            wrapped = element
+        else:
+            unwrapped.append(element)
+    return unwrapped

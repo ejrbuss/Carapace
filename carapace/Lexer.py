@@ -1,6 +1,6 @@
 import re
 
-from carapace import Scanner
+from carapace import (Span, Scanner)
 
 def token(type, action=None, skip=False):
 
@@ -19,7 +19,7 @@ def token(type, action=None, skip=False):
 
     return dict(type=type, action=action, skip=skip)
 
-def lex(token_defs, source):
+def lex(token_defs, source, source_name="<anonymous>"):
     scanner = Scanner.of(source)
     tokens  = []
     line    = 1
@@ -32,13 +32,13 @@ def lex(token_defs, source):
             if start == end:
                 continue
             
-            token = dict(
-                type   = token_def["type"],
-                source = Scanner.scan(scanner, start, end),
-                start  = start,
-                end    = end,
-                line   = line,
-                column = column,
+            token = Span.of(
+                token_def["type"],
+                Scanner.scan(scanner, start, end),
+                start,
+                end,
+                line,
+                column,
             )
             if not token_def["skip"]:
                 tokens.append(token)
@@ -50,7 +50,22 @@ def lex(token_defs, source):
                 column = len(lines[-1]) + 1
             break
         else:
-            raise SyntaxError("Unexpected input: " + Scanner.rest(scanner))
+            start = Scanner.checkpoint(scanner)
+            token = Span.of(
+                "error",
+                Scanner.scan(scanner, start, start + 1),
+                start,
+                start + 1,
+                line,
+                column,
+            )
+            context = Span.contextualize(
+                token, 
+                source, 
+                source_name=source_name, 
+                message="I'm not sure what this is!",
+            )
+            raise SyntaxError(f"Unexpected character sequence!\n" + context)
     return tokens
 
 def describe(token):
