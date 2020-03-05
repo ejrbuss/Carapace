@@ -1,7 +1,7 @@
 import re
 import pytest
 
-from carapace import (Lexer, Scanner, Data, BNF)
+from carapace import (ANSI, Lexer, Scanner, Data, EBNF)
 
 def test_str_token():
     str_token = Lexer.token("test", "str_token")
@@ -88,7 +88,7 @@ def test_lex():
             dict(type="terminal"),
             dict(type="terminator"),
         ],
-        Lexer.lex(BNF.token_defs, '''
+        Lexer.lex(EBNF.token_defs, '''
             identifier = identifier | 'terminal' ;
         '''),
     )
@@ -96,7 +96,7 @@ def test_lex():
 def test_syntax_error():
     pytest.raises(SyntaxError, lambda : Lexer.lex([], '+'))
     try:
-        Lexer.lex(BNF.token_defs, '''
+        Lexer.lex(EBNF.token_defs, '''
 identifier
     = identifier 
     | [ terminal ]
@@ -104,7 +104,7 @@ identifier
         ''')
     except SyntaxError as err:
         print(str(err))
-        assert str(err).strip() == '''
+        assert ANSI.escape(str(err)).strip() == '''
 Unexpected character sequence!
 
 <anonymous>:4:7

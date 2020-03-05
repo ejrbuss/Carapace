@@ -56,3 +56,33 @@ thread2 { # caching
     }
 }
 ```
+
+
+
+
+```
+let join = List.join
+
+let describe_expr = { expr ->
+    match expr {
+        [ --rule name expr ] => 
+            "${name}\n    = ${describe_expr expr}"
+        [ --sequence exprs ] => 
+            join (for exprs describe_expr) " "
+        [ --choice alternatives ] => 
+            join (for alternatives describe_expr) "\n    | "
+        [ --many expr ] =>
+            "{ ${describe_expr expr} }"
+        [ --option expr ] =>
+            "[ ${describe_expr expr} ]"
+        [ --non_terminal name ] =>
+            name
+        [ --terminal token_type ] =>
+            "'${token_type}'"
+    }
+}
+
+let describe = { grammar ->
+    join (for grammar.rules describe_expr) "\n\n"
+}
+```
