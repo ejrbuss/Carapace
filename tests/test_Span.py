@@ -18,17 +18,11 @@ int main() {
 }
 '''.strip()
     
-    span = Span.of(
-        "source",
-        "printf(\"Enter two integers: \");\nnscanf(\"%d %d\", &number1, &number2);  ",
-        70, 41, 6, 5,
-    )
-
-    context = Span.contextualize(span, source, "printing some numbers in C", 
+    span = Span.make("source", "test.c", source, 69, 140)
+    context = Span.contextualize(span, "printing some numbers in C", 
         prev_lines          = 100, 
         underline           = '~', 
-        source_name         = "test.c",
-        source_name_style   = ANSI.foreground(100, 100, 200),
+        file_style          = ANSI.foreground(100, 100, 200),
         prev_line_num_style = ANSI.foreground(200, 200, 255),
         span_line_num_style = ANSI.foreground(200, 100, 100),
         line_gutter_style   = ANSI.foreground(150, 150, 255),
@@ -37,6 +31,7 @@ int main() {
         underline_style     = ANSI.foreground(255, 100, 100),
         message_style       = ANSI.bold + ANSI.foreground(200, 50, 150),
     )
+    print(context)
     assert ANSI.escape(context).strip() == '''
 test.c:6:5
  1 | #include <stdio.h>

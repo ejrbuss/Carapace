@@ -1,5 +1,0 @@
-atoms 
-    = string
-    | flag
-    | number
-    ;

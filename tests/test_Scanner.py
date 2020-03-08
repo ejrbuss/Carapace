@@ -8,7 +8,7 @@ def test_furthest():
     furthest = Scanner.checkpoint(scanner)
     Scanner.rollback(scanner, checkpoint)
     assert Scanner.checkpoint(scanner) == checkpoint
-    assert Scanner.furthest(scanner) == furthest
+    assert Scanner.furthest(scanner) == "test"[furthest]
 
 def test_rollback():
     scanner = Scanner.of("test")
@@ -25,7 +25,3 @@ def test_current():
     assert Scanner.current(scanner) == "e"
     Scanner.consume(scanner, 3)
     assert Scanner.current(scanner) == None
-
-def test_scan():
-    scanner = Scanner.of("test")
-    assert Scanner.scan(scanner, 1, 3) == "test"[1:3]

@@ -10,12 +10,17 @@ def coverage(ctx):
 
 @task
 def graph(ctx):
-    from carapace import (Data, Parser, BNF, EBNF)
-    with open("bnf-graph.dot", "w") as f:
-        f.write(Parser.graph(BNF.parse(BNF.grammar_source)))
+    from carapace import (Data, Parser, Lexer, EBNF)
+    
     with open("ebnf-graph.dot", "w") as f:
-        f.write(Parser.graph(EBNF.parse(EBNF.grammar_source)))
-    # Data.dump(BNF.parse(BNF.grammar_source))
-    # Data.dump(EBNF.parse(EBNF.grammar_source))
-    ctx.run("dot -Tpng bnf-graph.dot -o bnf-graph.png")
+        tokens = Lexer.lex(EBNF.token_defs, EBNF.grammar_source, "ebnf-graph.dot")
+        cst    = Parser.parse(EBNF.grammar, tokens)
+        f.write(Parser.graph(cst))
+        
     ctx.run("dot -Tpng ebnf-graph.dot -o ebnf-graph.png")
+
+@task
+def check(ctx):
+    from carapace import (Parser, EBNF)
+    with open("carapace.ebnf", "r") as f:
+        print(Parser.describe(EBNF.parse(f.read())))

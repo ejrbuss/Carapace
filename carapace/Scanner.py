@@ -5,7 +5,7 @@ def checkpoint(scanner):
     return scanner["checkpoint"]
 
 def furthest(scanner):
-    return scanner["furthest"]
+    return scanner["source"][scanner["furthest"]]
 
 def rollback(scanner, checkpoint):
     scanner["checkpoint"] = checkpoint
@@ -21,9 +21,7 @@ def chomp(scanner):
 def consume(scanner, n):
     scanner["checkpoint"] += n
     scanner["furthest"] = max(scanner["furthest"], scanner["checkpoint"])
+    return scanner["checkpoint"]
 
 def rest(scanner):
     return scanner["source"][checkpoint(scanner):]
-
-def scan(scanner, start, end):
-    return scanner["source"][start:end]

@@ -13,7 +13,7 @@ from carapace.Parser import (
 
 token_defs = [
     Lexer.token("comment", re.compile(r"#.*"), skip=True),
-    Lexer.token("whitespace", re.compile(r"\s+"), skip=True),
+    Lexer.token("whitespace", re.compile(r"\s+|,"), skip=True),
     Lexer.token("op_eq", "="),
     Lexer.token("op_alt", "|"),
     Lexer.token("op_cleft", "{"),
@@ -86,8 +86,8 @@ grammar = Parser.grammar(
     ))
 )
 
-def parse(source):
-    tokens = Lexer.lex(token_defs, source)
+def parse(source, file="<anonymous>"):
+    tokens = Lexer.lex(token_defs, source, file)
     cst    = Parser.parse(grammar, tokens)
     ast    = walk(cst)
     return ast
@@ -101,7 +101,7 @@ def walk(node, flat_expr=False):
         ])
 
     if node["type"] == "rule":
-        name = node["children"][0]["source"]
+        name = node["children"][0]["value"]
         expr = walk(node["children"][2])
         return rule(name, expr)
 
@@ -146,8 +146,8 @@ def walk(node, flat_expr=False):
     if node["type"] == "atom":
         choice_node = node["children"][0]
         if choice_node["alt"] == 0:
-            return non_terminal(choice_node["children"][0]["source"])
+            return non_terminal(choice_node["children"][0]["value"])
         if choice_node["alt"] == 1:
-            return terminal(choice_node["children"][0]["source"][1:-1])
+            return terminal(choice_node["children"][0]["value"][1:-1])
 
     raise Exception("Unhandled node: ", node)

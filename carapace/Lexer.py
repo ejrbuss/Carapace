@@ -2,6 +2,7 @@ import re
 
 from carapace import (Span, Scanner)
 
+
 def token(type, action=None, skip=False):
 
     if isinstance(action, str):
@@ -19,11 +20,9 @@ def token(type, action=None, skip=False):
 
     return dict(type=type, action=action, skip=skip)
 
-def lex(token_defs, source, source_name="<anonymous>"):
+def lex(token_defs, source, file):
     scanner = Scanner.of(source)
     tokens  = []
-    line    = 1
-    column  = 1
     while Scanner.current(scanner) is not None:
         for token_def in token_defs:
             start = Scanner.checkpoint(scanner)
@@ -32,41 +31,28 @@ def lex(token_defs, source, source_name="<anonymous>"):
             if start == end:
                 continue
             
-            token = Span.of(
-                token_def["type"],
-                Scanner.scan(scanner, start, end),
-                start,
-                end,
-                line,
-                column,
+            token = Span.make(
+                type   = token_def["type"],
+                source = source,
+                file   = file,
+                start  = start,
+                end    = end,
             )
             if not token_def["skip"]:
                 tokens.append(token)
-            lines = token["source"].split("\n")
-            if len(lines) == 1:
-                column += len(token["source"])
-            else:
-                line  += len(lines) - 1
-                column = len(lines[-1]) + 1
             break
         else:
             start = Scanner.checkpoint(scanner)
-            token = Span.of(
-                "error",
-                Scanner.scan(scanner, start, start + 1),
-                start,
-                start + 1,
-                line,
-                column,
+            span = Span.make(
+                type   = "error",
+                source = source,
+                file   = file,
+                start  = start,
+                end    = start + 1,
             )
-            context = Span.contextualize(
-                token, 
-                source, 
-                source_name=source_name, 
-                message="I'm not sure what this is!",
-            )
+            context = Span.contextualize(span, message="I'm not sure what this is!")
             raise SyntaxError(f"Unexpected character sequence!\n" + context)
     return tokens
 
 def describe(token):
-    return f"{token['type']}[{token['source']}]"
+    return f"{token['type']}[{token['value']}]"

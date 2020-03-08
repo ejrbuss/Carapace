@@ -40,7 +40,7 @@ def test_token():
     assert Scanner.rest(scanner) == ""
 
 def test_describe():
-    token = dict(type="test", source="test_token")
+    token = dict(type="test", value="test_token")
     assert Lexer.describe(token) == "test[test_token]"
 
 def test_lex_metrics():
@@ -48,35 +48,41 @@ def test_lex_metrics():
         Lexer.token("whitespace", re.compile(r"\s+"), skip=True),
         Lexer.token("word", re.compile(r"\w+")),
     ]
-    assert Lexer.lex(tokens, " a bc\n   def ") == [
+    assert Lexer.lex(tokens, " a bc\n   def ", "file") == [
         {   
-            'column': 2,
-            'end': 2,
-            'line': 1,
-            'source': 'a',
-            'start': 1,
-            'type': 'word'
+            "source": " a bc\n   def ",
+            "file": "file",
+            "type": "word",
+            "value": "a",
+            "start": 1,
+            "end": 2,
+            "column": 2,
+            "line": 1,
         },
         {   
-            'column': 4,
-            'end': 5,
-            'line': 1,
-            'source': 'bc',
-            'start': 3,
-            'type': 'word'
+            "source": " a bc\n   def ",
+            "file": "file",
+            "type": "word",
+            "value": "bc",
+            "start": 3,
+            "end": 5,
+            "column": 4,
+            "line": 1,
         },
         {   
-            'column': 4,
-            'end': 12,
-            'line': 2,
-            'source': 'def',
-            'start': 9,
-            'type': 'word'
+            "source": " a bc\n   def ",
+            "file": "file",
+            "type": "word",
+            "value": "def",
+            "start": 9,
+            "end": 12,
+            "column": 4,
+            "line": 2,
         },
     ]
 
 def test_lex_syntax_error():
-    pytest.raises(SyntaxError, lambda : Lexer.lex([], "???"))
+    pytest.raises(SyntaxError, lambda : Lexer.lex([], "???", "???"))
 
 def test_lex():
     assert Data.subset(
@@ -88,29 +94,29 @@ def test_lex():
             dict(type="terminal"),
             dict(type="terminator"),
         ],
-        Lexer.lex(EBNF.token_defs, '''
+        Lexer.lex(EBNF.token_defs, """
             identifier = identifier | 'terminal' ;
-        '''),
+        """, ""),
     )
 
 def test_syntax_error():
-    pytest.raises(SyntaxError, lambda : Lexer.lex([], '+'))
+    pytest.raises(SyntaxError, lambda : Lexer.lex([], "+", ""))
     try:
-        Lexer.lex(EBNF.token_defs, '''
+        Lexer.lex(EBNF.token_defs, """
 identifier
     = identifier 
     | [ terminal ]
     ;
-        ''')
+        """, "<anonymous>")
     except SyntaxError as err:
         print(str(err))
-        assert ANSI.escape(str(err)).strip() == '''
+        assert ANSI.escape(str(err)).strip() == """
 Unexpected character sequence!
 
 <anonymous>:4:7
  2 | identifier
  3 |     = identifier 
  4 |     | [ terminal ]
-   |       ^ I'm not sure what this is!
+   |       ^ I"m not sure what this is!
 
-'''.strip()
+""".strip()

@@ -1,4 +1,4 @@
-from carapace import (Data, Scanner, Lexer)
+from carapace import (Data, Scanner, Lexer, Span)
 
 ### Gramamr ###
 
@@ -120,8 +120,8 @@ def parse(grammar, tokens):
             return (False, token)
 
     (parsed, cst) = parse_expr(grammar["root"])
-    if not parsed:
-        raise SyntaxError()
+    if not parsed or len(Scanner.rest(scanner)) > 0:
+        raise SyntaxError(Scanner.furthest(scanner))
     return cst
 
 def graph(cst, name="parse_tree"):

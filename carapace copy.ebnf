@@ -1,0 +1,142 @@
+# handle seperators with an extra pass over the tokens
+# ; and \n get classified as seperator and newline respectively
+# walk over the tokens, if you encounter ( set state to open, if you encounter
+# ), {}, [], set setate to closed. If you encounter a newline while closed 
+# convert that newline into a seperator. If you encountera newline while open
+# remove it from the token list
+
+# doc comments can be handled similarily, one pass over can merge them with 
+# preceeding/proceeding tokens as metadata
+
+# TODO operators
+# spread (..), piping (|, |>)
+# no math, just use prefix notation
+
+prog
+    = { stmt }
+    ;
+
+stmt
+    = expr 'seperator'
+    ;
+
+# stmt
+#     = 'let' pattern 'op_eq' expr 'sepeartor'
+#     | name 'op_eq' expr 'seperator'
+#     | 'loop' map 'sepeartor'
+#     | 'fail' expr 'sepeartor'
+#     | 'continue' 'seperator'
+#     | 'break' 'sepeartor'
+#     | expr 'seperator'
+#     ;
+
+# pattern 
+#     = atom [ pattern_capture ]
+#     | 'lbrace' { pattern } [ pattern_spread ] 'rbrace' [ pattern_capture ]
+#     | 'lbracket' { pattern } [ pattern_spread ] 'rbracket' [ pattern_capture ]
+#     ;
+
+# pattern_spread 
+#     = 'op_spread' [ 'identifier' ]
+#     ;
+
+# pattern_capture
+#     = 'op_at' pattern
+#     ;
+
+# atom
+#     = string
+#     | 'identifier'
+#     | 'flag_literal'
+#     | 'number_literal'
+#     ;
+
+# expr 
+#     = if_expr
+#     | case_expr
+#     | match_expr
+#     | for_expr
+#     | while_expr
+#     | try_expr
+#     | term { term }
+#     ;
+
+# if_expr
+#     | 'if' expr map [ else ]
+#     ;
+
+# else
+#     = 'else' map
+#     ;
+
+# case_expr
+#     = 'case' 'lbracket' { case } 'rbacket' [ else ]
+#     ;
+
+# case
+#     = expr 'op_fat_arrow' expr sepeartor
+#     ;
+
+# match_expr
+#     = 'match' expr 'lbracket' { match } 'rbracket' [ else ]
+#     ;
+
+# match
+#     = pattern 'op_fat_arrow' expr sepeartor
+#     ;
+
+# for_expr
+#     = 'for' expr if for_predicate function 'else' function
+#     | 'for' expr if for_predicate function
+#     | 'for' expr while for_predicate function
+#     | 'for' expr function
+#     ;
+
+# for_predicate
+#     = function
+#     | 'identifier'
+#     | 'lparen' expr 'rparen'
+#     ;
+
+# while_expr
+#     = 'while' expr map [ else ]
+#     ;
+
+# try_expr
+#     = 'try' expr function
+#     ;
+
+# name 
+#     = 'identifier' { qualifier }
+#     | 'lparen' expr 'rparen' { qualifier }
+#     ;
+
+# qualifier
+#     = 'op_dot' name
+#     ;
+
+# term
+#     = 'lparen' expr 'rparen'
+#     | 'op_spread' term
+#     | list
+#     | map
+#     | function
+#     | atom
+#     ;
+
+# list 
+#     = 'lbrace' { term } [ spread ] 'rbrace'
+#     ;
+
+# map
+#     = 'lbracket' { stmt } [ spread ] 'rbracket'
+#     ;
+
+# function 
+#     = 'lbracket' { pattern } 'op_slim_arrow' { stmt } 'rbracket'
+#     ;
+
+# string
+#     = 'string_literal'
+#     | 'string_literal_start' expr { string_inner } 'string_literal_end'
+#     ;
